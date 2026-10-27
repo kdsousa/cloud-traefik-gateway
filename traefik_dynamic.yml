@@ -1,0 +1,13 @@
+http:
+  middlewares:
+    # Middleware para forçar redirecionamento HTTP -> HTTPS
+    https-only:
+      redirectScheme:
+        scheme: https
+
+    # Middleware de autenticação básica para proteger o Dashboard
+    # Descomente para habilitar o basic auth
+    # dashboard-auth:
+    #   basicAuth:
+    #     users:
+    #       - 'admin:$2y$0gf5gdfu8ggdpigfdgePgAGdgfpi18gfgSdgWxdvApip44wdgdfghtyjikuoiopdgipDcOkv5pipipiLGHAgdgdigdffdgHJ8EXXpikfggfgfdpgdgddgik6Y1LSgKpiDFG7MpivKPlu'

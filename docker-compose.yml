@@ -1,0 +1,52 @@
+services:
+  traefik:
+    image: traefik:v3
+    restart: always
+    container_name: traefik
+    command:
+      # Habilita o Dashboard e a API interna
+      - '--api.dashboard=true'
+      # Habilita a integração automática com containers Docker
+      - '--providers.docker=true'
+      # Aponta para o arquivo de configurações dinâmicas (Middlewares, etc.)
+      - '--providers.file.filename=/etc/traefik/traefik_dynamic.yml'
+      
+      # Entrypoint HTTP (Porta 80) com redirecionamento automático para HTTPS
+      - '--entrypoints.web.address=:80'
+      - '--entrypoints.web.http.redirections.entrypoint.to=websecure'
+      - '--entrypoints.web.http.redirections.entrypoint.scheme=https'
+      
+      # Entrypoint HTTPS (Porta 443)
+      - '--entrypoints.websecure.address=:443'
+      
+      # Configuração do ACME (Let's Encrypt) para emissão de certificados SSL
+      - '--certificatesresolvers.myresolver.acme.tlschallenge=true'
+      - '--certificatesresolvers.myresolver.acme.email=keplin.s.sousa@gmail.com' # colocar email aqui
+      - '--certificatesresolvers.myresolver.acme.storage=/acme.json'
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      # Armazenamento dos certificados SSL gerados
+      - './acme.json:/acme.json'
+      # Acesso ao socket do Docker para leitura dinâmica de novos containers
+      - '/var/run/docker.sock:/var/run/docker.sock:ro'
+      # Montagem do arquivo de configurações dinâmicas
+      - './traefik_dynamic.yml:/etc/traefik/traefik_dynamic.yml'
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      
+      # Roteamento do Dashboard do Traefik
+      - "traefik.http.routers.traefik-dashboard.rule=Host(`traefik.keplo.com.br`)" # colocar subdominio aqui
+      - "traefik.http.routers.traefik-dashboard.service=api@internal"
+      - "traefik.http.routers.traefik-dashboard.entrypoints=websecure"
+      - "traefik.http.routers.traefik-dashboard.tls.certresolver=myresolver"
+      
+      # Aplicação do middleware de autenticação (Basic Auth) definido no traefik_dynamic.yml
+      - "traefik.http.routers.traefik-dashboard.middlewares=dashboard-auth@file"
+
+networks:
+  traefik:
+    external: true
